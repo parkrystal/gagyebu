@@ -143,6 +143,7 @@ input,select,textarea{font-size:16px!important}
 .mbar .ym small{font-size:11px}
 .rfb2{width:34px;height:34px;transform:translateY(-45%)}
 .calfix .bnr{margin-top:4px}
+.cnt{font-style:normal;display:inline-block;margin-left:8px;padding:2px 8px;border-radius:10px;background:var(--chip);color:var(--brand);font-size:11px;font-weight:700;vertical-align:1px}
 #app::after{content:'';position:absolute;left:0;right:0;bottom:0;height:calc(96px + env(safe-area-inset-bottom,0px));background:linear-gradient(to bottom,rgba(0,0,0,0),var(--bg) 70%);pointer-events:none;z-index:4}
 .nav{box-shadow:0 -4px 18px rgba(20,40,46,.16),0 8px 22px rgba(20,40,46,.22)}
 </style>
@@ -176,7 +177,7 @@ function vCal(){const an=S.anim||0;S.anim=0;
   g+=`<button class="d ${k===S.sel?'sel':''} ${k===TODAY?'today':''} ${w===0?'sun':w===6?'sat':''} ${i||o?'has':''}" data-date="${k}" onclick="S.sel='${k}';render()"><span class="dn">${d}</span>${i?`<i class="i-in">${i.toLocaleString()}</i>`:''}${o?`<i class="i-out">${o.toLocaleString()}</i>`:''}</button>`}
  const dl=l.filter(t=>t.date===S.sel);
  return `<div class="calwrap"><div class="calfix"><div class="hd"><div class="top"></div><div class="sumcard"><div class="sc"><div><small>수입</small><b class="i-in">${won(inc)}</b></div><div><small>지출</small><b class="i-out">${won(out)}</b></div></div><div class="sc2"><span><i class="dot cd"></i>카드 지출 ${won(cd)}</span><span><i class="dot cs"></i>현금 지출 ${won(cs)}</span></div></div>
- <div class="mbar">${mnav()}<button class="rfb2" onclick="hardReload()" aria-label="새로고침" title="새로고침">↻</button></div></div>${bk()}<div class="cal ${an>0?'an-r':an<0?'an-l':''}">${g}</div></div><div class="calist"><div class="list"><h3><span>${+S.sel.slice(5,7)}월 ${+S.sel.slice(8)}일</span><span><span class="i-in">${won(sumBy(dl,'in'))}</span> / <span class="i-out">${won(sumBy(dl,'out'))}</span></span></h3>${dl.length?dl.map(txRow).join(''):'<div class="empty">내역이 없어요. + 버튼으로 추가해 보세요.</div>'}</div></div></div>`}
+ <div class="mbar">${mnav()}<button class="rfb2" onclick="hardReload()" aria-label="새로고침" title="새로고침">↻</button></div></div>${bk()}<div class="cal ${an>0?'an-r':an<0?'an-l':''}">${g}</div></div><div class="calist"><div class="list"><h3><span>${+S.sel.slice(5,7)}월 ${+S.sel.slice(8)}일${dl.length?`<em class="cnt">${dl.length}건</em>`:''}</span><span><span class="i-in">${won(sumBy(dl,'in'))}</span> / <span class="i-out">${won(sumBy(dl,'out'))}</span></span></h3>${dl.length?dl.map(txRow).join(''):'<div class="empty">내역이 없어요. + 버튼으로 추가해 보세요.</div>'}</div></div></div>`}
 function vBud(){
  const l=monthTx();const spent=g=>l.filter(t=>t.type==='out'&&(CAT[t.cat]||[])[1]===g).reduce((a,t)=>a+t.amt,0);
  const tb=GROUPS.reduce((a,g)=>a+budgets[g],0),ts=sumBy(l,'out');
