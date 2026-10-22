@@ -126,6 +126,25 @@ input,select,textarea{font-size:16px!important}
 .calfix{position:relative;z-index:5;background:none;padding-bottom:16px;pointer-events:none}
 .calfix>*{pointer-events:auto}
 
+.top{padding:22px 16px 44px}
+.mbar{position:relative;padding:12px 0 2px}
+.rfb2{position:absolute;right:16px;top:50%;transform:translateY(-35%);width:32px;height:32px;border-radius:50%;background:var(--card);color:var(--brand);box-shadow:0 1px 6px rgba(20,40,46,.18);font-size:17px;line-height:1;display:grid;place-items:center}
+.mbar .mon{font-size:20px;gap:18px}
+.mbar .mon button{color:var(--ink);font-size:26px;line-height:1;padding:0 14px}
+.mbar .ym small{display:block;font-size:11px;font-weight:600;color:var(--sub);text-align:center;letter-spacing:.04em}
+.mbar .ym{text-align:center;min-width:80px;line-height:1.15}
+.hd .top{display:none}
+.hd .sumcard{margin:14px 12px 0;padding:14px 18px 12px;box-shadow:0 2px 12px rgba(20,40,46,.10)}
+.hd .sumcard .sc b{font-size:23px}
+.mbar{padding:10px 0 4px}
+.mbar .mon{gap:10px}
+.mbar .mon button{width:34px;height:34px;border-radius:50%;background:var(--card);box-shadow:0 1px 4px rgba(20,40,46,.12);font-size:20px;padding:0;display:grid;place-items:center}
+.mbar .ym{min-width:92px}
+.mbar .ym small{font-size:11px}
+.rfb2{width:34px;height:34px;transform:translateY(-45%)}
+.calfix .bnr{margin-top:4px}
+#app::after{content:'';position:absolute;left:0;right:0;bottom:0;height:calc(96px + env(safe-area-inset-bottom,0px));background:linear-gradient(to bottom,rgba(0,0,0,0),var(--bg) 70%);pointer-events:none;z-index:4}
+.nav{box-shadow:0 -4px 18px rgba(20,40,46,.16),0 8px 22px rgba(20,40,46,.22)}
 </style>
 </head>
 <body>
@@ -156,8 +175,8 @@ function vCal(){const an=S.anim||0;S.anim=0;
  for(let d=1;d<=days;d++){const k=key(S.y,S.m)+'-'+String(d).padStart(2,'0'),dl=l.filter(t=>t.date===k),i=sumBy(dl,'in'),o=sumBy(dl,'out'),w=new Date(S.y,S.m-1,d).getDay();
   g+=`<button class="d ${k===S.sel?'sel':''} ${k===TODAY?'today':''} ${w===0?'sun':w===6?'sat':''} ${i||o?'has':''}" data-date="${k}" onclick="S.sel='${k}';render()"><span class="dn">${d}</span>${i?`<i class="i-in">${i.toLocaleString()}</i>`:''}${o?`<i class="i-out">${o.toLocaleString()}</i>`:''}</button>`}
  const dl=l.filter(t=>t.date===S.sel);
- return `<div class="calwrap"><div class="calfix"><div class="hd"><div class="top">${mnav()}</div><div class="sumcard"><div class="sc"><div><small>수입</small><b class="i-in">${won(inc)}</b></div><div><small>지출</small><b class="i-out">${won(out)}</b></div></div><div class="sc2"><span><i class="dot cd"></i>카드 지출 ${won(cd)}</span><span><i class="dot cs"></i>현금 지출 ${won(cs)}</span></div></div>
- </div>${bk()}<div class="cal ${an>0?'an-r':an<0?'an-l':''}">${g}</div></div><div class="calist"><div class="list"><h3><span>${+S.sel.slice(5,7)}월 ${+S.sel.slice(8)}일</span><span><span class="i-in">${won(sumBy(dl,'in'))}</span> / <span class="i-out">${won(sumBy(dl,'out'))}</span></span></h3>${dl.length?dl.map(txRow).join(''):'<div class="empty">내역이 없어요. + 버튼으로 추가해 보세요.</div>'}</div></div></div>`}
+ return `<div class="calwrap"><div class="calfix"><div class="hd"><div class="top"></div><div class="sumcard"><div class="sc"><div><small>수입</small><b class="i-in">${won(inc)}</b></div><div><small>지출</small><b class="i-out">${won(out)}</b></div></div><div class="sc2"><span><i class="dot cd"></i>카드 지출 ${won(cd)}</span><span><i class="dot cs"></i>현금 지출 ${won(cs)}</span></div></div>
+ <div class="mbar">${mnav()}<button class="rfb2" onclick="hardReload()" aria-label="새로고침" title="새로고침">↻</button></div></div>${bk()}<div class="cal ${an>0?'an-r':an<0?'an-l':''}">${g}</div></div><div class="calist"><div class="list"><h3><span>${+S.sel.slice(5,7)}월 ${+S.sel.slice(8)}일</span><span><span class="i-in">${won(sumBy(dl,'in'))}</span> / <span class="i-out">${won(sumBy(dl,'out'))}</span></span></h3>${dl.length?dl.map(txRow).join(''):'<div class="empty">내역이 없어요. + 버튼으로 추가해 보세요.</div>'}</div></div></div>`}
 function vBud(){
  const l=monthTx();const spent=g=>l.filter(t=>t.type==='out'&&(CAT[t.cat]||[])[1]===g).reduce((a,t)=>a+t.amt,0);
  const tb=GROUPS.reduce((a,g)=>a+budgets[g],0),ts=sumBy(l,'out');
@@ -350,7 +369,7 @@ const SK='gagyebu-v1';
 function persist(){try{localStorage.setItem(SK,JSON.stringify({txs,rec,budgets,CAT,INC,CARDS,GHOST,ACC,PAID,uid,rid,LB}))}catch(e){}}
 function applyData(j){({txs,rec,budgets,CAT,INC,CARDS,GHOST,ACC,PAID}=Object.assign({txs,rec,budgets,CAT,INC,CARDS,GHOST,ACC,PAID},j));uid=j.uid||uid;rid=j.rid||rid;LB=j.LB!==undefined?j.LB:LB}
 function load(){try{const j=JSON.parse(localStorage.getItem(SK)||'null');if(j)applyData(j)}catch(e){}}
-function fitCal(){const c=document.querySelector('.cal'),l=document.querySelector('.calist');if(!c||!l)return;const h=c.offsetHeight+16;l.style.marginTop=-h+'px';l.style.paddingTop=h+'px'}
+function fitCal(){const c=document.querySelector('.cal'),l=document.querySelector('.calist');if(!c||!l)return;const rf=document.querySelector('.rfb');if(rf)rf.style.display='none';const h=c.offsetHeight+16;l.style.marginTop=-h+'px';l.style.paddingTop=h+'px'}
 function render(){render0();fitCal();persist()}
 window.addEventListener('resize',fitCal);
 

@@ -1,5 +1,5 @@
 // 오프라인 실행용 서비스 워커. 앱을 수정해서 다시 올릴 때는 V의 숫자를 올려 주세요.
-const V = 'gagyebu-v7';
+const V = 'gagyebu-v8';
 const FILES = ['./', './index.html', './manifest.webmanifest', './icons/icon-180.png', './icons/icon-192.png', './icons/icon-512.png'];
 
 self.addEventListener('install', e => {
