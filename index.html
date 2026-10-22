@@ -21,7 +21,7 @@ box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:en
 html,body{height:100%}
 body{background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;font-size:14px;display:flex;justify-content:center}
 #app{position:fixed;top:0;bottom:0;left:0;right:0;margin:0 auto;width:100%;max-width:430px;display:flex;flex-direction:column;background:var(--bg);overflow:hidden}
-#view{flex:1;overflow-y:auto;padding-bottom:84px;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+#view{flex:1;overflow-y:auto;padding-bottom:calc(112px + env(safe-area-inset-bottom,0px));overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
 button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 button:focus-visible,input:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
 .top{background:linear-gradient(160deg,var(--brand),var(--brand2));color:#fff;padding:14px 16px 12px;border-radius:0 0 22px 22px}
@@ -32,7 +32,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--brand);outline-
 .sum div{flex:1}.sum small{opacity:.85;font-size:12px}.sum b{display:block;font-size:19px;font-variant-numeric:tabular-nums}
 .cal{display:grid;grid-template-columns:repeat(7,1fr);padding:10px 8px 0}
 .cal .h{text-align:center;color:var(--sub);font-size:11px;padding:4px 0}
-.cal .d{min-height:54px;border-radius:10px;padding:3px 1px;text-align:center;font-size:12px;position:relative}
+.cal .d{min-height:50px;border-radius:10px;padding:3px 1px;text-align:center;font-size:12px;position:relative}
 .cal .d.sel{background:var(--card);box-shadow:inset 0 0 0 2px var(--brand)}
 .cal .d i{display:block;font-style:normal;font-size:10px;line-height:1.25;font-variant-numeric:tabular-nums}
 .i-in{color:var(--in)}.i-out{color:var(--out)}
@@ -46,7 +46,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--brand);outline-
 .amt{font-weight:700;font-variant-numeric:tabular-nums}
 .tx .x{color:var(--sub);padding:4px 6px;font-size:16px}
 .empty{color:var(--sub);text-align:center;padding:22px 0}
-.fab{position:absolute;right:18px;bottom:96px;width:54px;height:54px;border-radius:50%;background:var(--brand);color:#fff;font-size:28px;box-shadow:0 6px 16px rgba(0,0,0,.25);z-index:5}
+.fab{position:absolute;right:18px;bottom:calc(112px + env(safe-area-inset-bottom,0px));width:54px;height:54px;border-radius:50%;background:var(--brand);color:#fff;font-size:28px;box-shadow:0 6px 16px rgba(0,0,0,.25);z-index:5}
 .nav{position:absolute;left:12px;right:12px;bottom:calc(10px + env(safe-area-inset-bottom,0px));background:var(--card);border-radius:26px;display:flex;padding:6px;box-shadow:0 6px 20px rgba(0,0,0,.14);z-index:6}
 .nav button{flex:1;padding:8px 0 6px;border-radius:20px;font-size:11px;color:var(--sub);display:flex;flex-direction:column;align-items:center;gap:2px}
 .nav button span{font-size:19px}.nav button.on{background:var(--chip);color:var(--brand);font-weight:700}
@@ -71,7 +71,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--brand);outline-
 .keys .sv{grid-column:span 1;background:var(--brand);color:#fff;font-size:14px;font-weight:700;grid-row:span 4}
 .keys .sv:disabled{opacity:.4}
 .memo{width:100%;border:0;background:var(--chip);color:var(--ink);border-radius:10px;padding:10px;font:inherit;margin-top:4px}
-.toast{position:absolute;left:50%;bottom:150px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:18px;font-size:13px;z-index:20}
+.toast{position:absolute;left:50%;bottom:calc(150px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:18px;font-size:13px;z-index:20}
 .tag{font-size:11px;padding:3px 8px;border-radius:8px;flex:none}
 .g0{background:rgba(224,71,91,.15);color:var(--out)}.g1{background:rgba(217,119,6,.16);color:#d97706}.g2{background:rgba(124,58,237,.16);color:#8b5cf6}
 .top{padding-bottom:40px}
@@ -108,6 +108,10 @@ html,body{overflow:hidden;overscroll-behavior:none}
 @keyframes anR{from{opacity:0;transform:translateX(28px)}to{opacity:1;transform:none}}
 @keyframes anL{from{opacity:0;transform:translateX(-28px)}to{opacity:1;transform:none}}
 .cal.an-r{animation:anR .22s ease-out}.cal.an-l{animation:anL .22s ease-out}
+#view.fixv{overflow-y:hidden;padding-bottom:0;display:flex;flex-direction:column}
+.calwrap{flex:1;min-height:0;display:flex;flex-direction:column}
+.calfix{flex:none}
+.calist{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding-bottom:calc(112px + env(safe-area-inset-bottom,0px))}
 </style>
 </head>
 <body>
@@ -138,9 +142,8 @@ function vCal(){const an=S.anim||0;S.anim=0;
  for(let d=1;d<=days;d++){const k=key(S.y,S.m)+'-'+String(d).padStart(2,'0'),dl=l.filter(t=>t.date===k),i=sumBy(dl,'in'),o=sumBy(dl,'out');
   g+=`<button class="d ${k===S.sel?'sel':''} ${k===TODAY?'today':''}" data-date="${k}" onclick="S.sel='${k}';render()"><span class="dn">${d}</span>${i?`<i class="i-in">${i.toLocaleString()}</i>`:''}${o?`<i class="i-out">${o.toLocaleString()}</i>`:''}</button>`}
  const dl=l.filter(t=>t.date===S.sel);
- return `<div class="hd"><div class="top">${mnav()}</div><div class="sumcard"><div class="sc"><div><small>수입</small><b class="i-in">${won(inc)}</b></div><div><small>지출</small><b class="i-out">${won(out)}</b></div></div><div class="sc2"><span><i class="dot cd"></i>카드 지출 ${won(cd)}</span><span><i class="dot cs"></i>현금 지출 ${won(cs)}</span></div></div>
- </div>${bk()}<div class="cal ${an>0?'an-r':an<0?'an-l':''}">${g}</div>
- <div class="list"><h3><span>${+S.sel.slice(5,7)}월 ${+S.sel.slice(8)}일</span><span><span class="i-in">${won(sumBy(dl,'in'))}</span> / <span class="i-out">${won(sumBy(dl,'out'))}</span></span></h3>${dl.length?dl.map(txRow).join(''):'<div class="empty">내역이 없어요. + 버튼으로 추가해 보세요.</div>'}</div>`}
+ return `<div class="calwrap"><div class="calfix"><div class="hd"><div class="top">${mnav()}</div><div class="sumcard"><div class="sc"><div><small>수입</small><b class="i-in">${won(inc)}</b></div><div><small>지출</small><b class="i-out">${won(out)}</b></div></div><div class="sc2"><span><i class="dot cd"></i>카드 지출 ${won(cd)}</span><span><i class="dot cs"></i>현금 지출 ${won(cs)}</span></div></div>
+ </div>${bk()}<div class="cal ${an>0?'an-r':an<0?'an-l':''}">${g}</div></div><div class="calist"><div class="list"><h3><span>${+S.sel.slice(5,7)}월 ${+S.sel.slice(8)}일</span><span><span class="i-in">${won(sumBy(dl,'in'))}</span> / <span class="i-out">${won(sumBy(dl,'out'))}</span></span></h3>${dl.length?dl.map(txRow).join(''):'<div class="empty">내역이 없어요. + 버튼으로 추가해 보세요.</div>'}</div></div></div>`}
 function vBud(){
  const l=monthTx();const spent=g=>l.filter(t=>t.type==='out'&&(CAT[t.cat]||[])[1]===g).reduce((a,t)=>a+t.amt,0);
  const tb=GROUPS.reduce((a,g)=>a+budgets[g],0),ts=sumBy(l,'out');
@@ -167,7 +170,7 @@ function vSet(){return `<div class="pg"><h2>설정</h2><div class="card">
  <div class="sub" style="padding:0 4px">데이터는 이 폰의 브라우저 저장소에만 저장돼요. 주기적으로 백업 파일을 저장해 두세요.</div></div>`}
 const TABS=[['cal','📅','달력'],['bud','👛','예산'],['rep','📊','리포트'],['ass','🐷','자산'],['set','⚙️','설정']];
 function render0(){
- document.getElementById('view').innerHTML=(S.det?vDet:S.tab==='set'&&S.page?vPage:{cal:vCal,bud:vBud,rep:vRep,ass:vAss,set:vSet}[S.tab])();document.querySelector('.fab').style.display=S.det||(S.tab==='set'&&S.page)?'none':'';document.querySelector('.rfb').style.display=S.det||(S.tab==='set'&&S.page)?'none':'';
+ document.getElementById('view').innerHTML=(S.det?vDet:S.tab==='set'&&S.page?vPage:{cal:vCal,bud:vBud,rep:vRep,ass:vAss,set:vSet}[S.tab])();document.getElementById('view').classList.toggle('fixv',S.tab==='cal'&&!S.det);document.querySelector('.fab').style.display=S.det||(S.tab==='set'&&S.page)?'none':'';document.querySelector('.rfb').style.display=S.det||(S.tab==='set'&&S.page)?'none':'';
  document.getElementById('nav').innerHTML=TABS.map(([k,i,n])=>`<button class="${S.tab===k?'on':''}" onclick="S.tab='${k}';S.page=null;S.back=null;S.det=null;render()"><span>${i}</span>${n}</button>`).join('')}
 function del(id){txs=txs.filter(t=>t.id!==id);render()}
 function toast(m){const e=document.createElement('div');e.className='toast';e.textContent=m;document.getElementById('app').appendChild(e);setTimeout(()=>e.remove(),1800)}
@@ -304,7 +307,7 @@ document.addEventListener('pointermove',e=>{if(!DG)return;
  if(!DG.on){if(Math.hypot(e.clientX-DG.x,e.clientY-DG.y)>8){if(DG.tp==='mouse')startDrag();else{clearTimeout(DG.t);DG=null}}return}
  mvGhost(e.clientX,e.clientY);document.querySelectorAll('.cal .d.drop').forEach(c=>c.classList.remove('drop'));
  const c=cellAt(e.clientX,e.clientY);if(c)c.classList.add('drop');
- const hd=document.querySelector('.hd'),top=hd&&hd.getBoundingClientRect?hd.getBoundingClientRect().bottom:80;if(e.clientY<top+30)document.getElementById('view').scrollTop-=14});
+ });
 function endDrag(e,ok){if(!DG)return;clearTimeout(DG.t);const d=DG;DG=null;if(!d.on)return;dragOn=false;
  const c=ok?cellAt(e.clientX,e.clientY):null;
  if(d.g)d.g.remove();d.r.classList.remove('lift');document.querySelectorAll('.cal .d.drop').forEach(x=>x.classList.remove('drop'));
