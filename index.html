@@ -20,8 +20,8 @@ box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:en
 *{box-sizing:border-box;margin:0}
 html,body{height:100%}
 body{background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;font-size:14px;display:flex;justify-content:center}
-#app{width:100%;max-width:430px;height:100%;display:flex;flex-direction:column;position:relative;background:var(--bg);overflow:hidden}
-#view{flex:1;overflow-y:auto;padding-bottom:84px}
+#app{position:fixed;top:0;bottom:0;left:0;right:0;margin:0 auto;width:100%;max-width:430px;display:flex;flex-direction:column;background:var(--bg);overflow:hidden}
+#view{flex:1;overflow-y:auto;padding-bottom:84px;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
 button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 button:focus-visible,input:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
 .top{background:linear-gradient(160deg,var(--brand),var(--brand2));color:#fff;padding:14px 16px 12px;border-radius:0 0 22px 22px}
@@ -96,10 +96,22 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--brand);outline-
 .ym small{font-size:11px;font-weight:500;opacity:.75;letter-spacing:.03em}
 .pg .mon button{color:var(--ink)}
 .bnr{display:block;width:calc(100% - 24px);margin:10px 12px 0;padding:10px 12px;border-radius:12px;background:var(--chip);color:var(--sub);font-size:12px;text-align:left}
+.rfb{position:absolute;top:10px;right:12px;z-index:7;width:30px;height:30px;border-radius:50%;background:var(--card);color:var(--brand);box-shadow:0 1px 6px rgba(0,0,0,.22);font-size:17px;line-height:1;display:grid;place-items:center}
+.rfb:active{transform:rotate(180deg)}
+html,body{overflow:hidden;overscroll-behavior:none}
+.hd{position:sticky;top:0;z-index:4;background:var(--bg);padding-bottom:6px}
+.stk{position:sticky;top:0;z-index:3;background:var(--bg);margin:-16px -14px 0;padding:16px 14px 8px}
+.stk h2{margin-bottom:8px}
+.pg>h2:first-child{position:sticky;top:0;z-index:3;background:var(--bg);margin:-16px -14px 4px;padding:16px 14px 10px}
+.pg>.row2:first-child{position:sticky;top:0;z-index:3;background:var(--bg);margin:-16px -14px 0;padding:14px 14px 8px!important}
+.cal{touch-action:pan-y}
+@keyframes anR{from{opacity:0;transform:translateX(28px)}to{opacity:1;transform:none}}
+@keyframes anL{from{opacity:0;transform:translateX(-28px)}to{opacity:1;transform:none}}
+.cal.an-r{animation:anR .22s ease-out}.cal.an-l{animation:anL .22s ease-out}
 </style>
 </head>
 <body>
-<div id="app"><div id="view"></div><button class="fab" onclick="openSheet()" aria-label="내역 추가">+</button>
+<div id="app"><div id="view"></div><button class="rfb" onclick="hardReload()" aria-label="새로고침" title="새로고침">↻</button><button class="fab" onclick="openSheet()" aria-label="내역 추가">+</button>
 <nav class="nav" id="nav"></nav><div id="layer"></div><input type="file" id="bf" accept=".json,application/json" hidden onchange="readBackup(this)"></div>
 <script>
 let CAT={식비:['🍚','생활비'],외식:['🍜','생활비'],교통비:['🚌','생활비'],문화생활:['🎵','생활비'],생필품:['🛒','생활비'],의류:['👕','생활비'],미용:['💄','생활비'],'의료/건강':['💊','생활비'],교육:['📖','생활비'],통신비:['📱','고정지출'],공과금:['💡','고정지출'],보험:['🏠','고정지출'],경조사:['🎁','특별지출'],세금:['🧾','특별지출']};
@@ -118,21 +130,21 @@ const sumBy=(l,type)=>l.filter(t=>t.type===type).reduce((a,t)=>a+t.amt,0);
 const icon=t=>ico(t.type,t.cat);
 function txRow(t){return `<div class="tx" data-id="${t.id}" onclick="openEdit(${t.id})"><div class="ic">${icon(t)}</div><div class="m"><b>${esc(t.memo||t.cat)}</b><small>${t.cat} · ${t.pay}${t.rec?' · 🔁':''}</small></div><span class="amt ${t.type==='in'?'i-in':t.type==='out'?'i-out':''}">${won(t.amt)}</span></div>`}
 function mnav(){return `<div class="mon"><button onclick="mv(-1)" aria-label="이전 달">‹</button><span class="ym"><small>${S.y}</small>${S.m}월</span><button onclick="mv(1)" aria-label="다음 달">›</button></div>`}
-function mv(d){S.m+=d;if(S.m<1){S.m=12;S.y--}if(S.m>12){S.m=1;S.y++}S.sel=key(S.y,S.m)+'-01';render()}
-function vCal(){
+function mv(d){S.m+=d;if(S.m<1){S.m=12;S.y--}if(S.m>12){S.m=1;S.y++}S.sel=key(S.y,S.m)+'-01';S.anim=d;render()}
+function vCal(){const an=S.anim||0;S.anim=0;
  const l=monthTx(),inc=sumBy(l,'in'),out=sumBy(l,'out'),cd=l.filter(t=>t.type==='out'&&isCard(t.pay)).reduce((a,t)=>a+t.amt,0),cs=out-cd;
  const first=new Date(S.y,S.m-1,1).getDay(),days=new Date(S.y,S.m,0).getDate();
  let g=['일','월','화','수','목','금','토'].map(d=>`<div class="h">${d}</div>`).join('')+'<div></div>'.repeat(first);
  for(let d=1;d<=days;d++){const k=key(S.y,S.m)+'-'+String(d).padStart(2,'0'),dl=l.filter(t=>t.date===k),i=sumBy(dl,'in'),o=sumBy(dl,'out');
   g+=`<button class="d ${k===S.sel?'sel':''} ${k===TODAY?'today':''}" data-date="${k}" onclick="S.sel='${k}';render()"><span class="dn">${d}</span>${i?`<i class="i-in">${i.toLocaleString()}</i>`:''}${o?`<i class="i-out">${o.toLocaleString()}</i>`:''}</button>`}
  const dl=l.filter(t=>t.date===S.sel);
- return `<div class="top">${mnav()}</div><div class="sumcard"><div class="sc"><div><small>수입</small><b class="i-in">${won(inc)}</b></div><div><small>지출</small><b class="i-out">${won(out)}</b></div></div><div class="sc2"><span><i class="dot cd"></i>카드 지출 ${won(cd)}</span><span><i class="dot cs"></i>현금 지출 ${won(cs)}</span></div></div>
- ${bk()}<div class="cal">${g}</div>
+ return `<div class="hd"><div class="top">${mnav()}</div><div class="sumcard"><div class="sc"><div><small>수입</small><b class="i-in">${won(inc)}</b></div><div><small>지출</small><b class="i-out">${won(out)}</b></div></div><div class="sc2"><span><i class="dot cd"></i>카드 지출 ${won(cd)}</span><span><i class="dot cs"></i>현금 지출 ${won(cs)}</span></div></div>
+ </div>${bk()}<div class="cal ${an>0?'an-r':an<0?'an-l':''}">${g}</div>
  <div class="list"><h3><span>${+S.sel.slice(5,7)}월 ${+S.sel.slice(8)}일</span><span><span class="i-in">${won(sumBy(dl,'in'))}</span> / <span class="i-out">${won(sumBy(dl,'out'))}</span></span></h3>${dl.length?dl.map(txRow).join(''):'<div class="empty">내역이 없어요. + 버튼으로 추가해 보세요.</div>'}</div>`}
 function vBud(){
  const l=monthTx();const spent=g=>l.filter(t=>t.type==='out'&&(CAT[t.cat]||[])[1]===g).reduce((a,t)=>a+t.amt,0);
  const tb=GROUPS.reduce((a,g)=>a+budgets[g],0),ts=sumBy(l,'out');
- return `<div class="pg"><h2>예산</h2>${mnav().replace('color:#fff','')}<div class="card" style="margin-top:12px"><div class="sub">${S.m}월 전체 지출 / 예산</div><div class="big">${won(ts)}</div><div class="bar ${tb&&ts>tb?'over':''}"><i style="width:${(tb?Math.min(100,ts/tb*100):0)}%"></i></div><div class="sub" style="margin-top:6px">${!tb?'아래에서 그룹별 예산을 입력해 보세요':ts>tb?won(ts-tb)+' 초과':'남은 예산 '+won(tb-ts)}</div></div>
+ return `<div class="pg"><div class="stk"><h2>예산</h2>${mnav()}</div><div class="card" style="margin-top:12px"><div class="sub">${S.m}월 전체 지출 / 예산</div><div class="big">${won(ts)}</div><div class="bar ${tb&&ts>tb?'over':''}"><i style="width:${(tb?Math.min(100,ts/tb*100):0)}%"></i></div><div class="sub" style="margin-top:6px">${!tb?'아래에서 그룹별 예산을 입력해 보세요':ts>tb?won(ts-tb)+' 초과':'남은 예산 '+won(tb-ts)}</div></div>
  ${GROUPS.map(g=>{const s=spent(g),b=budgets[g];return `<div class="card"><div class="row2"><b>${g}</b><label class="sub">예산 <input class="bin" type="number" inputmode="numeric" value="${b}" onchange="budgets['${g}']=+this.value||0;render()"></label></div><div class="row2" style="margin-top:8px"><span class="amt">${won(s)}</span><span class="sub">${b?Math.round(s/b*100):0}%</span></div><div class="bar ${s>b?'over':''}"><i style="width:${b?Math.min(100,s/b*100):0}%"></i></div></div>`}).join('')}</div>`}
 function vRep(){
  const l=monthTx(),out=sumBy(l,'out'),inc=sumBy(l,'in');
@@ -142,7 +154,7 @@ function vRep(){
  const body=S.rtab==='cat'?`<div class="card"><div class="sub">지출 합계</div><div class="big">${won(out)}</div><div class="sub">수입 ${won(inc)} · 순수입 ${won(inc-out)}</div></div>
   <div class="card">${rows.length?rows.map(([c,v])=>`<div style="margin-bottom:12px"><div class="row2"><span>${(CAT[c]||['❔'])[0]} ${c} <span class="sub">${Math.round(v/out*100)}%</span></span><span class="amt">${won(v)}</span></div><div class="bar"><i style="width:${v/rows[0][1]*100}%"></i></div></div>`).join(''):'<div class="empty">이번 달 지출이 없어요.</div>'}</div>`
   :`<div class="card"><div class="sub">결제수단별 지출</div>${Object.entries(card).sort((a,b)=>b[1]-a[1]).map(([c,v])=>`<div style="margin-top:12px"><div class="row2"><span>${c}</span><span class="amt">${won(v)}</span></div><div class="bar"><i style="width:${v/out*100}%"></i></div></div>`).join('')||'<div class="empty">내역이 없어요.</div>'}</div>`;
- return `<div class="pg"><h2>리포트</h2>${mnav()}<div class="seg" style="margin:12px 0"><button class="${S.rtab==='cat'?'on':''}" onclick="S.rtab='cat';render()">카테고리</button><button class="${S.rtab==='pay'?'on':''}" onclick="S.rtab='pay';render()">결제수단</button></div>${body}</div>`}
+ return `<div class="pg"><div class="stk"><h2>리포트</h2>${mnav()}</div><div class="seg" style="margin:12px 0"><button class="${S.rtab==='cat'?'on':''}" onclick="S.rtab='cat';render()">카테고리</button><button class="${S.rtab==='pay'?'on':''}" onclick="S.rtab='pay';render()">결제수단</button></div>${body}</div>`}
 function vAssOld(){
  const cash=100000+txs.reduce((a,t)=>a+(t.pay==='현금'?(t.type==='in'?t.amt:-t.amt):0),0);
  const cardOut=p=>txs.filter(t=>t.type==='out'&&t.pay===p).reduce((a,t)=>a+t.amt,0);
@@ -151,11 +163,11 @@ function vAssOld(){
 function vSet(){return `<div class="pg"><h2>설정</h2><div class="card">
  <button class="set" style="width:100%" onclick="S.page='catOut';render()"><span>지출 카테고리</span><span class="sub">${Object.keys(CAT).length}개 ›</span></button><button class="set" style="width:100%" onclick="S.page='catIn';render()"><span>입금 카테고리</span><span class="sub">${Object.keys(INC).length}개 ›</span></button>
  <button class="set" style="width:100%" onclick="S.page='card';render()"><span>카드 관리</span><span class="sub">${CARDS.length}개 ›</span></button><button class="set" style="width:100%" onclick="S.page='acc';render()"><span>현금·계좌 관리</span><span class="sub">${ACC.length}개 ›</span></button><button class="set" style="width:100%" onclick="S.page='rec';render()"><span>반복·구독</span><span class="sub">${rec.length}건 ›</span></button><button class="set" style="width:100%" onclick="exportJSON()"><span>백업 파일 저장</span><span class="sub">${LB?'마지막 '+LB:'백업한 적 없어요'} ›</span></button><button class="set" style="width:100%" onclick="pickBackup()"><span>백업 파일 불러오기</span><span class="sub">›</span></button><button class="set" style="width:100%" onclick="exportCSV()"><span>CSV로 내보내기</span><span class="sub">›</span></button>
- <button class="set" style="width:100%" onclick="wipe()"><span class="i-out">${S.wp?'정말 지울까요? 한 번 더 누르면 모두 삭제돼요':'내역 모두 지우기'}</span></button></div>
+ <button class="set" style="width:100%" onclick="loadSample()"><span>${S.sp?'지금 데이터가 모두 바뀌어요. 한 번 더 누르면 넣어요':'테스트용 샘플 데이터 넣기'}</span></button><button class="set" style="width:100%" onclick="wipe()"><span class="i-out">${S.wp?'정말 지울까요? 한 번 더 누르면 모두 삭제돼요':'내역 모두 지우기'}</span></button></div>
  <div class="sub" style="padding:0 4px">데이터는 이 폰의 브라우저 저장소에만 저장돼요. 주기적으로 백업 파일을 저장해 두세요.</div></div>`}
 const TABS=[['cal','📅','달력'],['bud','👛','예산'],['rep','📊','리포트'],['ass','🐷','자산'],['set','⚙️','설정']];
 function render0(){
- document.getElementById('view').innerHTML=(S.det?vDet:S.tab==='set'&&S.page?vPage:{cal:vCal,bud:vBud,rep:vRep,ass:vAss,set:vSet}[S.tab])();document.querySelector('.fab').style.display=S.det||(S.tab==='set'&&S.page)?'none':'';
+ document.getElementById('view').innerHTML=(S.det?vDet:S.tab==='set'&&S.page?vPage:{cal:vCal,bud:vBud,rep:vRep,ass:vAss,set:vSet}[S.tab])();document.querySelector('.fab').style.display=S.det||(S.tab==='set'&&S.page)?'none':'';document.querySelector('.rfb').style.display=S.det||(S.tab==='set'&&S.page)?'none':'';
  document.getElementById('nav').innerHTML=TABS.map(([k,i,n])=>`<button class="${S.tab===k?'on':''}" onclick="S.tab='${k}';S.page=null;S.back=null;S.det=null;render()"><span>${i}</span>${n}</button>`).join('')}
 function del(id){txs=txs.filter(t=>t.id!==id);render()}
 function toast(m){const e=document.createElement('div');e.className='toast';e.textContent=m;document.getElementById('app').appendChild(e);setTimeout(()=>e.remove(),1800)}
@@ -292,7 +304,7 @@ document.addEventListener('pointermove',e=>{if(!DG)return;
  if(!DG.on){if(Math.hypot(e.clientX-DG.x,e.clientY-DG.y)>8){if(DG.tp==='mouse')startDrag();else{clearTimeout(DG.t);DG=null}}return}
  mvGhost(e.clientX,e.clientY);document.querySelectorAll('.cal .d.drop').forEach(c=>c.classList.remove('drop'));
  const c=cellAt(e.clientX,e.clientY);if(c)c.classList.add('drop');
- if(e.clientY<110)document.getElementById('view').scrollTop-=14});
+ const hd=document.querySelector('.hd'),top=hd&&hd.getBoundingClientRect?hd.getBoundingClientRect().bottom:80;if(e.clientY<top+30)document.getElementById('view').scrollTop-=14});
 function endDrag(e,ok){if(!DG)return;clearTimeout(DG.t);const d=DG;DG=null;if(!d.on)return;dragOn=false;
  const c=ok?cellAt(e.clientX,e.clientY):null;
  if(d.g)d.g.remove();d.r.classList.remove('lift');document.querySelectorAll('.cal .d.drop').forEach(x=>x.classList.remove('drop'));
@@ -344,6 +356,27 @@ load();S.y=+TODAY.slice(0,4);S.m=+TODAY.slice(5,7);S.sel=TODAY;
 try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(e){}
 if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
 
+async function hardReload(){try{if(navigator.serviceWorker){const rs=await navigator.serviceWorker.getRegistrations();await Promise.all(rs.map(r=>r.unregister()))}if(window.caches){const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)))}}catch(e){}location.reload()}
+let SX=null;
+document.addEventListener('pointerdown',e=>{SX=null;if(S.tab!=='cal'||S.det)return;const c=e.target.closest&&e.target.closest('.cal');if(c)SX={x:e.clientX,y:e.clientY,t:Date.now()}});
+document.addEventListener('pointerup',e=>{if(!SX)return;const s0=SX;SX=null;const dx=e.clientX-s0.x,dy=e.clientY-s0.y;
+ if(Math.abs(dx)>50&&Math.abs(dx)>Math.abs(dy)*1.5&&Date.now()-s0.t<800){window.noClk=true;setTimeout(()=>{window.noClk=false},350);mv(dx<0?1:-1)}});
+document.addEventListener('pointercancel',()=>{SX=null});
+function loadSample(){
+ if(!S.sp){S.sp=true;render();setTimeout(()=>{S.sp=false;if(S.tab==='set'&&!S.page)render()},4000);return}
+ S.sp=false;
+ const ym=TODAY.slice(0,7),D=d=>ym+'-'+pad(d);
+ const mk=(d,type,cat,memo,amt,pay,rc)=>{const t={id:uid++,date:D(d),type,cat,memo,amt,pay};if(rc)t.rec=rc;return t};
+ txs=[mk(1,'out','식비','장보기',48000,'롯데카드'),mk(2,'out','외식','점심 국밥',9500,'현금'),mk(3,'out','교통비','지하철 충전',30000,'국민카드'),mk(5,'out','문화생활','영화',14000,'삼성카드'),mk(8,'out','생필품','세제·휴지',31300,'롯데카드'),
+  mk(10,'out','통신비','휴대폰 요금',29700,'롯데카드',1),mk(12,'out','보험','실손보험',57850,'국민카드',2),mk(12,'out','보험','자동차보험',63600,'국민카드'),mk(15,'out','외식','치킨',24000,'현금'),mk(16,'in','월급','10월 급여',1600000,'현금'),
+  mk(16,'out','공과금','건강보험',27400,'국민카드',3),mk(20,'in','용돈','용돈',7000,'현금'),mk(20,'out','교육','온라인 강의',23000,'삼성카드'),mk(21,'in','이자','예금 이자',11000,'현금'),mk(21,'out','식비','마트',34800,'롯데카드'),
+  mk(22,'in','용돈','알바비',20000,'현금'),mk(22,'out','외식','배달',10000,'롯데카드')];
+ txs.forEach(t=>{if(t.memo==='10월 급여')t.memo=(+ym.slice(5))+'월 급여'});
+ rec=[{id:1,type:'out',cat:'통신비',memo:'휴대폰 요금',amt:29700,pay:'롯데카드',cycle:'매달',start:D(10),gen:[ym]},{id:2,type:'out',cat:'보험',memo:'실손보험',amt:57850,pay:'국민카드',cycle:'매달',start:D(12),gen:[ym]},{id:3,type:'out',cat:'공과금',memo:'건강보험',amt:27400,pay:'국민카드',cycle:'매달',start:D(16),gen:[ym]}];
+ rid=4;budgets={생활비:1500000,고정지출:400000,특별지출:300000};
+ CARDS=['롯데카드','국민카드','삼성카드'];GHOST=[];PAID={};
+ ACC=[{n:'현금',t:'현금',b:100000},{n:'신한은행',t:'계좌',b:500000},{n:'네이버페이 머니',t:'페이머니',b:30000}];
+ S.tab='cal';S.page=null;S.det=null;S.y=+TODAY.slice(0,4);S.m=+TODAY.slice(5,7);S.sel=TODAY;toast('샘플 데이터를 넣었어요');render()}
 render();
 </script>
 </body>
